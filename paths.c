@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <math.h>
 
-#define DEBUG   false
+#define DEBUG   true
+#define PATH_STEPS   32
 
 /*
 Quadrants in the games are viewed like this for simplicity, because the 2D viewport is in the actual 3rq quadrant in the cartesian plane
@@ -52,13 +53,13 @@ for the remainder octants, we swap x an y, and change signals accordingly:
 
 // Contains 64 angles, with 16 movements of 2 pixels each, with the delta stored as (dx,dy) for the 4th quadrand (315 to 360 degrees)/
 // All other quadrants are calculated by swapping x by y and changing the sign
-uint8_t path_angle_lut[3][64][32][2];
+uint8_t path_angle_lut[64][PATH_STEPS][2];
 uint8_t angle_to_lut[360];   // First index is the index into the Lut, the other 2 are the multiplication factor for x and y
-uint8_t path_circle[200][2];
-double double_circle[200][2];
+int  path_circle[1024][2];
+double double_circle[1024][2];
 
 void main(){
-    double dx[32], dy[32], mdx, mdy, angle;
+    double dx[PATH_STEPS], dy[PATH_STEPS], mdx, mdy, angle;
     uint8_t movex, movey, degree, prevdegree=30, prevx, prevy;
     for(int i=0;i<64;i++){
         angle = (M_PI_4*i)/63.0;
@@ -76,74 +77,58 @@ void main(){
                 angle_to_lut[360-degree]=i;
             prevdegree=degree;
         }
+        else {
+            angle_to_lut[360-degree]=prevdegree;
+        }
         if(DEBUG)
             printf("Degree: %d \n", degree);
-        dx[0]=sin(angle)*2;
-        dy[0]=0;
         // Calculates the distances from the origin (0, 0)
-        for(int step=0;step<32;step++){
+        for(int step=0;step<PATH_STEPS;step++){
             dx[step]=cos(angle)*(step+1);
             dy[step]=sin(angle)*(step+1);
         }
-            // Calculates the integer deltas
-        mdx=0;
-        mdy=0;
-        movex=0;
-        movey=0;
-
-        for(int step=0;step<32;step++){
-            // Rounds, taking into accout what we misseds in the previous rounding
-            path_angle_lut[i][step][0]=lround(dx[step]-movex+mdx);
-            path_angle_lut[i][step][1]=lround(dy[step]-movey+mdy);
-            // Calculates the total integer movement so far
-            movex+=path_angle_lut[i][step][0];
-            movey+=path_angle_lut[i][step][1];
-            // Calculates the missing fraction from the integer movement
-            mdx=dx[step]-movex;
-            mdx=dy[step]-movey;
+        prevy=0;
+        for(int step=0;step<PATH_STEPS;step++){
+            path_angle_lut[i][step][0]=lround(dx[step]);
+            path_angle_lut[i][step][1]=lround(dy[step]);
+            // Correct in case it has moved less than 2 pixels in the y axis (issue with sprites on line 216, so we only have sprites on odd lines)
+            if(path_angle_lut[i][step][1]-prevy==2){
+                prevy=path_angle_lut[i][step][1];
+            }else {
+                path_angle_lut[i][step][1]=prevy;
+            }
             if(DEBUG)
-                printf("Entry: %d, Angle: %f, Step: %d: (%f, %f), (%d, %d) - Round: (%d, %d)\n", i, angle, step, dx[step], dy[step], movex, movey, path_angle_lut[i][step][0], path_angle_lut[i][step][1]);
+                printf("Entry: %d, Angle: %f, Step: %d: (%f, %f), (%d, %d)\n", i, angle, step, dx[step], dy[step], path_angle_lut[i][step][0], path_angle_lut[i][step][1]);
         }
     }
     // Calculates the circle movements, for several radii: 32, 64, 96, 128, 160, 192, 224
     // Does it in the first 45 degrees in the 4th quadrant, and other quadrants and complementing 45 degrees are calculated by changing signs, and dx by dy
+    int radius_steps[6];
     for(int r=32; r<225; r+=32){
-        // Calculates the perimeter for 45 degrees of the circle
-        double perimeter = 2*M_PI_4*r;
+        // Calculates the perimeter for 360 degrees of the circle
+        double perimeter = 2*M_PI*r;
         // We move two pixels distance each time, then we have perimeter/2 steps to do (the character is already at the initial position)
         int steps=lround(perimeter/2.0);
+        if(steps%4)
+            steps=steps+(4-steps%4);
         // Calculates the integer deltas
         mdx=0;
         mdy=0;
         movex=0;
         movey=0;
-
+        radius_steps[r/32 - 1] = steps;
         // Calculate the double values
         for(int i=0;i<steps;i++){
-            angle = (M_PI_4*(i+1))/(double)steps;
-            double_circle[i][0]=cos(angle)*(double)r; //*2*(i+1);
-            double_circle[i][1]=sin(angle)*(double)r; //2*(i+1);
+            angle = (2*M_PI*(i+1))/(double)steps;
+            double_circle[i][0]=cos(angle)*(double)r;//*2*(i+1);
+            double_circle[i][1]=sin(angle)*(double)r;//*2*(i+1);
+            path_circle[i][0]=lround(double_circle[i][0]);
+            path_circle[i][1]=lround(double_circle[i][1]);            
             //printf("Radius: %d, Steps: %d, Step: %d, Angle: %f, (%f, %f)\n", r, steps, i, angle, double_circle[i][0], double_circle[i][1]);
-        }
-        // The origin point value
-        prevx=r;
-        prevy=0;
-        // Creates the integer deltas
-        for(int step=0;step<steps;step++){
-            path_circle[step][0]=lround(double_circle[step][0]);
-            path_circle[step][1]=lround(double_circle[step][1]);
-            movex=prevx-path_circle[step][0];
-            movey=path_circle[step][1]-prevy;
-            // Calculates the missing fraction from the integer movement
-            mdx=double_circle[step][0]-path_circle[step][0];
-            mdy=double_circle[step][1]-path_circle[step][1];
-
-            prevx=path_circle[step][0];
-            prevy=path_circle[step][1];
-
             if(DEBUG)
-                printf("Radius: %d, Steps: %d, Step: %d, (%f, %f)x(%d, %d) - Move: (%d, %d)\n", r, steps, step, double_circle[step][0], 
-                    double_circle[step][1], path_circle[step][0], path_circle[step][1], movex, movey);
+                printf("Radius: %d, Steps: %d, Step: %d, (%f, %f)x(%d, %d)\n", r, steps, i, double_circle[i][0], 
+                    double_circle[i][1], path_circle[i][0], path_circle[i][1]);
+
         }
     }
     if(!DEBUG){
@@ -181,7 +166,24 @@ void main(){
         printf("},\n\n");
         
         
-        printf("#const  u8  CirclePathValues[MAX_CIRCLE_MOVEMENTS] = {32, 64, 96, 128, 160, 192, 224};\n\n");
+        printf("#const  u8  CirclePathValues[MAX_CIRCLE_MOVEMENTS] = {32, 64, 96, 128, 160, 192, 224};\n");
+        printf("#const  u8  CirclePathSteps[MAX_CIRCLE_MOVEMENTS] = {");
+            for(int i=0;i<6;i++)
+                if(i!=5)    
+                    printf(" %d,", radius_steps[i]);
+                else
+                 printf(" %d ", radius_steps[i]);
+        printf("};\n");
+        for(int r=32;r<225;r++){
+            printf("const u8 Circl2Path%d={ \n}");
+            for(int steps=0;steps<radius_steps[r/32-1];steps++){
+                if(steps!=radius_steps[r/32-1]-1)
+                    printf("{ %d, %d}, ");
+                else
+                    printf("{ %d, %d} ");
+            }
+            printf("};\n");
+        }
         
         printf("#endif\n");
     }

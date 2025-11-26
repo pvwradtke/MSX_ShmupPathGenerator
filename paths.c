@@ -82,7 +82,7 @@ void main(){
                 path_angle_lut[i][step][1] = abs(y)%2 ? y-1 : y;
             }
             if(DEBUG)
-               printf("Entry: %d, Angle: %f, Step: %d: (%f, %f), (%d, %d)\n", i, angle, step, cos(angle)*((step+1)*2), sin(angle)*((step+1)*2), 
+               printf("Entry: %d, Angle: %d, Step: %d: (%f, %f), (%d, %d)\n", i, degree, step, cos(angle)*((step+1)*2), sin(angle)*((step+1)*2), 
                 path_angle_lut[i][step][0], path_angle_lut[i][step][1]);
         }
     }
@@ -105,14 +105,14 @@ void main(){
         // Calculate the double values
         for(int i=0;i<steps;i++){
             angle = (2*M_PI*(i+1))/(double)steps;
-            double_circle[i][0]=cos(angle)*(double)r;//*2*(i+1);
-            double_circle[i][1]=sin(angle)*(double)r;//*2*(i+1);
+            double_circle[i][0]=cos(angle)*(double)(r+1)*16;
+            double_circle[i][1]=sin(angle)*(double)(r+1)*16;
             path_circle[r][i][0]=lround(double_circle[i][0]);
             path_circle[r][i][1]=lround(double_circle[i][1]);
             if(path_circle[r][i][1]%2)
                 path_circle[r][i][1]+=1;
             if(DEBUG)
-                printf("Radius: %d, Steps: %d, Step: %d, (%f, %f)x(%d, %d)\n", r, steps, i, double_circle[i][0], 
+                printf("Radius: %d, Steps: %d, Step: %d, (%f, %f)x(%d, %d)\n", (r+1)*16, steps, i, double_circle[i][0], 
                     double_circle[i][1], path_circle[r][i][0], path_circle[r][i][1]);
 
         }

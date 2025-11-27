@@ -122,11 +122,16 @@ void main(){
 
         printf("#define PATH_STEPS  16\n#define PATH_SLICES 120\n");
         printf("enum   CIRCLE_RADII    {RADIUS16, RADIUS32, RADIUS48, RADIUS64, RADIUS80, RADIUS96, RADIUS112, MAX_CIRCLE_RADII};\n\n");
-        
+        printf("typedef struct CirclePath{\n");
+        printf("    i8  *path[2];\n");
+        printf("    u8  radius;\n");
+        printf("    u16 steps;\n");
+        printf("}CirclePath;\n\n");
+
         printf("#ifndef  PATHS_H\n#define PATHS_H\n\n");
 
         // Print the linear PATHS
-        printf("const   i8  PathAngleLut[PATH_SLICES][PATH_STEPS][2] ={\n\n");
+        printf("const   i8  PathAngleLUT[PATH_SLICES][PATH_STEPS][2] ={\n\n");
         for(int i=0;i<PATH_ANGLES;i++){
             printf("    { ");
             printf("// Angle: %d\n", i*3);
@@ -141,7 +146,7 @@ void main(){
                 printf("}\n");
         }
         printf("};\n\n");
-        printf("const   u8  DegreeToPathLut[360] ={\n");
+        printf("const   u8  DegreeToPathAngleLUT[360] ={\n");
         for(int i=0;i<18;i++){
             printf("    ");
             for(int j=0;j<20;j++){
@@ -153,19 +158,9 @@ void main(){
             printf("\n");
         }
         printf("};\n\n");
-        
-        
-        printf("const u8  CirclePathRadius[MAX_CIRCLE_RADII] = {16, 32, 48, 64, 80, 96, 112};\n");
-        printf("const u16  CirclePathSteps[MAX_CIRCLE_RADII] = {");
-        for(int i=0; i<7;i++)
-            if(i!=6)
-                printf(" %d,", path_circle_steps[i]);
-            else
-                printf(" %d ", path_circle_steps[i]);
-        printf("};\n");
-        
+              
         for(int r=0;r<7;r++){
-            printf("const i8 CirclePathLut%d[%d][2]={ \n", (r+1)*16, path_circle_steps[r]);
+            printf("const i8 CircleR%d[%d][2]={ \n", (r+1)*16, path_circle_steps[r]);
             for(int step=0;step<path_circle_steps[r];step++){
                 if(step!=path_circle_steps[r]-1)
                     printf("{ %d, %d}, ", path_circle[r][step][0], path_circle[r][step][1]);
@@ -174,23 +169,18 @@ void main(){
             }
             printf("\n};\n\n");
         }
-        printf("const i8 *CirclePathLutReferences[2]={\n");
+        printf("const CirclePath     CirclePathLUT[MAX_CIRCLE_RADII]={\n");
         for(int r=0;r<7;r++){
             if(r!=6)
-                printf("    CirclePathLut%d,\n",(r+1)*16);
+                printf("    { CircleR%d, %d, %d},\n",(r+1)*16, (r+1)*16, path_circle_steps[r]);
             else
-                printf("    CirclePathLut%d\n",(r+1)*16);
+                printf("    { CircleR%d, %d, %d}\n",(r+1)*16, (r+1)*16, path_circle_steps[r]);
         }
         printf("};\n\n");
         printf("#else\n\n");
-        printf("extern const i8 PathAngleLut[PATH_SLICES][PATH_STEPS][2];\n");
-        printf("extern const u8 DegreeToPathLut[360];\n");
-        printf("extern const u8 CirclePathRadius[MAX_CIRCLE_RADII];\n");
-        printf("extern const u16 CirclePathSteps[MAX_CIRCLE_RADII];\n");
-        for(int r=0;r<7;r++)
-            printf("extern const i8 CirclePathLut%d[%d];\n", (r+1)*16, path_circle_steps[r]);
-        printf("extern const i8 *CirclePathLutReferences[2];\n\n");
-
+        printf("extern const i8 PathAngleLUT[PATH_SLICES][PATH_STEPS][2];\n");
+        printf("extern const u8 DegreeToPathAngleLUT[360];\n");
+        printf("extern const CirclePath CirclePathLUT[MAX_CIRCLE_RADII];\n\n");
         printf("#endif\n");
     }
 }

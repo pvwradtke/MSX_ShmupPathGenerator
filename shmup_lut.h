@@ -3,7 +3,7 @@
 enum   CIRCLE_RADII    {RADIUS16, RADIUS32, RADIUS48, RADIUS64, RADIUS80, RADIUS96, RADIUS112, MAX_CIRCLE_RADII};
 
 typedef struct CirclePath{
-    i8  *path[2];
+    i8  (*path)[2];
     u8  radius;
     u16 steps;
 }CirclePath;
@@ -319,4 +319,5 @@ const CirclePath     CirclePathLUT[MAX_CIRCLE_RADII]={
 extern const i8 PathAngleLUT[PATH_SLICES][PATH_STEPS][2];
 extern const u8 DegreeToPathAngleLUT[360];
 extern const CirclePath CirclePathLUT[MAX_CIRCLE_RADII];
+
 #endif

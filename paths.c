@@ -123,7 +123,7 @@ void main(){
         printf("#define PATH_STEPS  16\n#define PATH_SLICES 120\n");
         printf("enum   CIRCLE_RADII    {RADIUS16, RADIUS32, RADIUS48, RADIUS64, RADIUS80, RADIUS96, RADIUS112, MAX_CIRCLE_RADII};\n\n");
         printf("typedef struct CirclePath{\n");
-        printf("    i8  *path[2];\n");
+        printf("    i8  (*path)[2];\n");
         printf("    u8  radius;\n");
         printf("    u16 steps;\n");
         printf("}CirclePath;\n\n");

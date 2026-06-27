@@ -3,21 +3,32 @@
 #include <stdint.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-#define DEBUG   false
-#define PATH_STEPS      16      // Enough to move through 32 pixels at 2 pixels speed
-#define PATH_DIVISIONS  16      // Enough to give us a 3 degrees precision
+#define DEBUG   true
+#define PATH_STEPS      32      // Enough to move through 32 pixels at 2 pixels speed
 #define OCTANT          15
-#define PATH_ANGLES     (OCTANT*8)     // there should be 120 angles stored in the structure
+#define PATH_ANGLES     128     // there should be 120 angles stored in the structure
+#define ANGLES_PER_QUADRANT 32
 
 /*
-Quadrants in the games are viewed like this for simplicity, because the 2D viewport is in the actual 3rq quadrant in the cartesian plane
- 
+
+The targetting system requires a 16x16 pixels based lookup table. Instead of finding the actual angle, an approximation is made by taking the abselute dx and 
+dy values (player to enemy) and dividin the values by 16 (>>4) until both tdx and dy are smaller than 16 (between 0 and 15). Then an index is chosen in the 
+lookup table table by (dy<<4) + dx. This will be an angle between 0 to 32. Then according to quadrants, angles are adjusted:
      |
   2  |  3
 -----|-----
   1  |  0 
      |
+
+    if (dx < 0) {
+        if (dy < 0) return 64 + angle;   // Top-Left
+        else        return 64 - angle;   // Bottom-Left
+    } else {
+        if (dy < 0) return (128 - angle) & 127; // Top-Right (wraps to 127)
+        else        return angle;               // Bottom-Right
+    }
 
 Viewport:
 ---------------> x
@@ -27,30 +38,8 @@ Viewport:
 |
 y
 
-As all pre-calculations are made in octants, we need to consider:
-
-  \ 5 | 6 / 
- 4 \  |  /  7
-    \ | /
------\|/-----
-     /|\   
- 3  / | \   0
-   /  |  \
-  / 2 | 1 \
-
-If we need to determine to which octant an angle belongs to, we simply divide it by 8 and get the integer part (angle/8)
-
-As for the way those are used, the table contains the absolute values for the movements for octant 0. To get the numbers
-for the remainder octants, we swap x an y, and change signals accordingly:
-
-0: x, y
-1: y, x
-2: y, -x
-3: -x, y
-4: -x, -y
-5: -y, -x
-6: -y, x
-7: x, y
+Then a lookup table with 128 different angles is created for each 2 pixels movement by frame (path_angle_lut), and a lookup table for angles is creatred by
+dividing 360 degrees in 128 parts (angle_to_lut), which is useful for getting fixed angle values
 
 */
 
@@ -59,6 +48,7 @@ for the remainder octants, we swap x an y, and change signals accordingly:
 // All other quadrants are calculated by swapping x by y and changing the sign
 int path_angle_lut[PATH_ANGLES][PATH_STEPS][2];
 uint8_t angle_to_lut[360];   // First index is the index into the Lut, the other 2 are the multiplication factor for x and y
+uint8_t targeting16x16[256];
 int  path_circle[7][1024][2];
 double double_circle[1024][2];
 
@@ -67,27 +57,61 @@ int path_circle_steps[7];
 void main(){
     double dx[PATH_STEPS], dy[PATH_STEPS], angle;
     int x, y, degree, prevdegree=0, prevx, prevy;
+
+    
+    for (int dy = 0; dy < 16; dy++) {
+        printf("    ");
+        for (int dx = 0; dx < 16; dx++) {
+            int angle_index;
+            
+            if (dx == 0 && dy == 0) {
+                // The undefined center point. Defaulting to 32 (Straight Down)
+                angle_index = 32; 
+            } else {
+                // Calculate angle in radians
+                double radians = atan2((double)dy, (double)dx);
+                
+                // Convert to 0-32 index and add 0.5 to round to nearest integer
+                angle_index = (int)(((radians / (M_PI/2)) * ANGLES_PER_QUADRANT) + 0.5);
+            }
+            
+            // Format output to maintain the visual grid
+            targeting16x16[dx+16*dy]=angle_index;
+            if(DEBUG)
+                printf("Index %02d = %02d \n", dx+16*dy, angle_index);
+        }
+    }
+
+    int px, py, cx, cy;
     for(int i=0;i<PATH_ANGLES;i++){
-        angle = i*2*M_PI/120;
+        px=0;
+        py=0;
+        angle = i*2*M_PI/PATH_ANGLES;
         degree=lround((180*angle)/M_PI);
         if(DEBUG)
             printf("Degree: %d \n", degree);
         // Calculates the distances from the origin (0, 0)
         for(int step=0;step<PATH_STEPS;step++){
-            path_angle_lut[i][step][0]=lround(cos(angle)*((step+1)*2));
+            /*path_angle_lut[i][step][0]=lround(cos(angle)*((step+1)*2));
             y=lround(sin(angle)*((step+1)*2));
             if(y>=0){
                 path_angle_lut[i][step][1] = y%2 ? y+1 : y; 
             }else{
                 path_angle_lut[i][step][1] = abs(y)%2 ? y-1 : y;
-            }
+            }*/
+            cx = floor(cos(angle)*((step+1)));
+            path_angle_lut[i][step][0]= cx - px;
+            px = cx;
+            cy=floor(sin(angle)*((step+1)));
+            path_angle_lut[i][step][1] = cy-py;
+            py=cy;
             if(DEBUG)
-               printf("Entry: %d, Angle: %d, Step: %d: (%f, %f), (%d, %d)\n", i, degree, step, cos(angle)*((step+1)*2), sin(angle)*((step+1)*2), 
+               printf("Entry: %d, Angle: %d, Step: %d: (%f, %f), (%d, %d)\n", i, degree, step, cos(angle)*((step+1)), sin(angle)*((step+1)), 
                 path_angle_lut[i][step][0], path_angle_lut[i][step][1]);
         }
     }
     for(int i=0;i<360;i++)
-        angle_to_lut[i]=i/3;
+        angle_to_lut[i]=(128*i)/360; 
     if(DEBUG)
         for(int i=0;i<360;i++)
             printf("Angle: %d, LUT: %d\n", i, angle_to_lut[i]);
@@ -120,7 +144,7 @@ void main(){
     if(!DEBUG){
         // Prints the paths
 
-        printf("#define PATH_STEPS  16\n#define PATH_SLICES 120\n");
+        printf("#define PATH_STEPS  16\n#define PATH_SLICES 128\n");
         printf("enum   CIRCLE_RADII    {RADIUS16, RADIUS32, RADIUS48, RADIUS64, RADIUS80, RADIUS96, RADIUS112, MAX_CIRCLE_RADII};\n\n");
         printf("typedef struct CirclePath{\n");
         printf("    i8  (*path)[2];\n");
@@ -129,6 +153,21 @@ void main(){
         printf("}CirclePath;\n\n");
 
         printf("#ifndef  PATHS_H\n#define PATHS_H\n\n");
+
+        // Print the targeting 256 bytes lookup table
+        printf("// 16x16 Aiming Matrix for 128-Angle System\n");
+        printf("// Layout: Left to Right (dx 0-15), Top to Bottom (dy 0-15)\n");
+        printf("const u8 aim_matrix[256] = {\n");
+        for (int dy = 0; dy < 16; dy++) {
+            printf("    ");
+            for (int dx = 0; dx < 16; dx++) {
+                printf("%02d,", targeting16x16[dx+16*dy]);
+            }
+            printf("\n");
+        }
+        printf("};\n\n"); 
+
+        
 
         // Print the linear PATHS
         printf("const   i8  PathAngleLUT[PATH_SLICES][PATH_STEPS][2] ={\n\n");

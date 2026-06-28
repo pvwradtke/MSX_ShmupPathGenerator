@@ -5,9 +5,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define DEBUG   true
-#define PATH_STEPS      32      // Enough to move through 32 pixels at 2 pixels speed
-#define OCTANT          15
+#define DEBUG   false
+#define PATH_STEPS      16      // Enough to move through 32 pixels at 1 pixels speed
 #define PATH_ANGLES     128     // there should be 120 angles stored in the structure
 #define ANGLES_PER_QUADRANT 32
 
@@ -92,17 +91,11 @@ void main(){
             printf("Degree: %d \n", degree);
         // Calculates the distances from the origin (0, 0)
         for(int step=0;step<PATH_STEPS;step++){
-            /*path_angle_lut[i][step][0]=lround(cos(angle)*((step+1)*2));
-            y=lround(sin(angle)*((step+1)*2));
-            if(y>=0){
-                path_angle_lut[i][step][1] = y%2 ? y+1 : y; 
-            }else{
-                path_angle_lut[i][step][1] = abs(y)%2 ? y-1 : y;
-            }*/
-            cx = floor(cos(angle)*((step+1)));
+
+            cx = lround(cos(angle)*((step+1)));
             path_angle_lut[i][step][0]= cx - px;
             px = cx;
-            cy=floor(sin(angle)*((step+1)));
+            cy=lround(sin(angle)*((step+1)));
             path_angle_lut[i][step][1] = cy-py;
             py=cy;
             if(DEBUG)
@@ -127,14 +120,23 @@ void main(){
             steps=steps+(4-steps%4);
         path_circle_steps[r]=steps;
         // Calculate the double values
+        int cx, cy, px=(r+1)*16, py=0;
         for(int i=0;i<steps;i++){
             angle = (2*M_PI*(i+1))/(double)steps;
-            double_circle[i][0]=cos(angle)*(double)(r+1)*16;
+/*            double_circle[i][0]=cos(angle)*(double)(r+1)*16;
             double_circle[i][1]=sin(angle)*(double)(r+1)*16;
             path_circle[r][i][0]=lround(double_circle[i][0]);
             path_circle[r][i][1]=lround(double_circle[i][1]);
             if(path_circle[r][i][1]%2)
-                path_circle[r][i][1]+=1;
+                path_circle[r][i][1]+=1;*/
+            double_circle[i][0]=cos(angle)*(double)(r+1)*16;
+            double_circle[i][1]=sin(angle)*(double)(r+1)*16;
+            cx=lround(double_circle[i][0]);
+            cy=lround(double_circle[i][1]);
+            path_circle[r][i][0]=cx-px;
+            path_circle[r][i][1]=cy-py;
+            px=cx;
+            py=cy;
             if(DEBUG)
                 printf("Radius: %d, Steps: %d, Step: %d, (%f, %f)x(%d, %d)\n", (r+1)*16, steps, i, double_circle[i][0], 
                     double_circle[i][1], path_circle[r][i][0], path_circle[r][i][1]);
@@ -144,7 +146,7 @@ void main(){
     if(!DEBUG){
         // Prints the paths
 
-        printf("#define PATH_STEPS  16\n#define PATH_SLICES 128\n");
+        printf("#define PATH_STEPS  %d\n#define PATH_ANGLES %d\n", PATH_STEPS, PATH_ANGLES);
         printf("enum   CIRCLE_RADII    {RADIUS16, RADIUS32, RADIUS48, RADIUS64, RADIUS80, RADIUS96, RADIUS112, MAX_CIRCLE_RADII};\n\n");
         printf("typedef struct CirclePath{\n");
         printf("    i8  (*path)[2];\n");
@@ -170,10 +172,10 @@ void main(){
         
 
         // Print the linear PATHS
-        printf("const   i8  PathAngleLUT[PATH_SLICES][PATH_STEPS][2] ={\n\n");
+        printf("const   i8  PathAngleLUT[PATH_ANGLES][PATH_STEPS][2] ={\n\n");
         for(int i=0;i<PATH_ANGLES;i++){
             printf("    { ");
-            printf("// Angle: %d\n", i*3);
+            printf("// Angle: %d\n", (360*i)/128);
             for(int j=0;j<PATH_STEPS;j++){
                 printf("{ %d, %d}", path_angle_lut[i][j][0], path_angle_lut[i][j][1]);
                 if(j!=PATH_STEPS-1)
@@ -217,7 +219,7 @@ void main(){
         }
         printf("};\n\n");
         printf("#else\n\n");
-        printf("extern const i8 PathAngleLUT[PATH_SLICES][PATH_STEPS][2];\n");
+        printf("extern const i8 PathAngleLUT[PATH_ANGLES][PATH_STEPS][2];\n");
         printf("extern const u8 DegreeToPathAngleLUT[360];\n");
         printf("extern const CirclePath CirclePathLUT[MAX_CIRCLE_RADII];\n\n");
         printf("#endif\n");

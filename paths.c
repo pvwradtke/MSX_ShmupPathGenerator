@@ -49,7 +49,7 @@ dividing 360 degrees in 128 parts (angle_to_lut), which is useful for getting fi
 int path_angle_lut[PATH_ANGLES][PATH_STEPS][2];
 uint8_t angle_to_lut[360];   // First index is the index into the Lut, the other 2 are the multiplication factor for x and y
 uint8_t targeting16x16[256];
-uint8_t shootingPoints[3][PATH_ANGLES][2];
+int shootingPoints[3][PATH_ANGLES][2];
 //int  path_circle[7][1024][2];
 //double double_circle[1024][2];
 
@@ -115,8 +115,8 @@ void main(){
         int radius=8*pow(2,r);
         for(int i=0;i<128;i++){
             angle = i*2*M_PI/PATH_ANGLES;
-            shootingPoints[r][i][0] = radius+lround(cos(angle)*radius)-2;
-            shootingPoints[r][i][1] = radius+lround(sin(angle)*radius)-2;
+            shootingPoints[r][i][0] = radius+lround(cos(angle)*(radius-3))-2;
+            shootingPoints[r][i][1] = radius+lround(sin(angle)*(radius-3))-2;
             if(DEBUG)
                printf("Radius: %d, Step: %d, (%d, %d)\n", radius, i, shootingPoints[r][i][0], shootingPoints[r][i][1]);
         }
@@ -236,7 +236,7 @@ void main(){
         printf("extern const i8 PathAngleLUT[PATH_ANGLES][PATH_STEPS][2];\n");
         printf("extern const u8 DegreeToPathAngleLUT[360];\n");
         printf("extern const u8 DegreeToPathAngleLUT[360];\n");
-        printf("extern const i8 ShootingCircle[3][%d][2];\n", PATH_ANGLES);
+        printf("extern const i8 ShootingCircle[3][PATH_ANGLES][2];\n");
         //printf("extern const CirclePath CirclePathLUT[MAX_CIRCLE_RADII];\n\n");*/
         printf("#endif\n");
     }

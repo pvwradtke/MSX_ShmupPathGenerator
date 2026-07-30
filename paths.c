@@ -155,7 +155,7 @@ void main(){
     // Calculate the spider downwards movement
     for(int i=0;i<SPIDER_STEPS;++i){
         double  angle=(double)i*3*M_PI/180;
-        path_spider[i]=-31+70*sin(angle);
+        path_spider[i]=-31+86*sin(angle);
         if(DEBUG)
             printf("Spider: %d, y:%d\n", i, path_spider[i]);
     }

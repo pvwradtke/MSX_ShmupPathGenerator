@@ -10,7 +10,7 @@
 #define PATH_ANGLES         128     // there should be 120 angles stored in the structure
 #define DISTANCE            2
 #define ANGLES_PER_QUADRANT 32
-#define SPIDER_STEPS        45
+#define SPIDER_STEPS        30
 
 /*
 
@@ -154,8 +154,8 @@ void main(){
     }*/
     // Calculate the spider downwards movement
     for(int i=0;i<SPIDER_STEPS;++i){
-        double  angle=(double)i*2*M_PI/180;
-        path_spider[i]=-31+120*sin(angle);
+        double  angle=(double)i*3*M_PI/180;
+        path_spider[i]=-31+70*sin(angle);
         if(DEBUG)
             printf("Spider: %d, y:%d\n", i, path_spider[i]);
     }

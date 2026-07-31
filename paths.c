@@ -247,7 +247,7 @@ void main(){
             if(i%10==0 && i!= 0)
                 printf("\n\t");
         }
-        printf("};\n");
+        printf("\n};\n");
         /*printf("const CirclePath     CirclePathLUT[MAX_CIRCLE_RADII]={\n");
         for(int r=0;r<7;r++){
             if(r!=6)

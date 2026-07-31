@@ -316,7 +316,8 @@ const i8 ShootingCircle[3][128][2]={
 const u8 SpiderPath[SPIDER_STEPS]={ 
 	{0,0}, {0,5}, {0,4}, {0,5}, {0,4}, {0,5}, {0,4}, {0,4}, {0,3}, {0,5}, {0,3}, 
 	{0,4}, {0,4}, {0,4}, {0,3}, {0,3}, {0,3}, {0,3}, {0,3}, {0,3}, {0,2}, 
-	{0,2}, {0,2}, {0,2}, {0,1}, {0,2}, {0,1}, {0,0}, {0,1}, {0,0}};
+	{0,2}, {0,2}, {0,2}, {0,1}, {0,2}, {0,1}, {0,0}, {0,1}, {0,0}
+};
 extern const u8 aim_matrix[256];
 extern const i8 PathAngleLUT[PATH_ANGLES][PATH_STEPS][2];
 extern const u8 DegreeToPathAngleLUT[360];

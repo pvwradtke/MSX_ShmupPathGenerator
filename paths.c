@@ -153,9 +153,13 @@ void main(){
         }
     }*/
     // Calculate the spider downwards movement
+    int ycurrent=-31, next;
     for(int i=0;i<SPIDER_STEPS;++i){
         double  angle=(double)i*3*M_PI/180;
-        path_spider[i]=-31+86*sin(angle);
+        next=-31+86*sin(angle);
+        path_spider[i]=next-ycurrent;
+        if(next!=ycurrent)
+            ycurrent=next;
         if(DEBUG)
             printf("Spider: %d, y:%d\n", i, path_spider[i]);
     }
@@ -235,9 +239,13 @@ void main(){
         printf("const u8 SpiderPath[SPIDER_STEPS]={ \n\t");
         for(int i=0;i<SPIDER_STEPS;++i){
             if(path_spider[i]>=0)
-                printf("%d, ", path_spider[i]);
+                printf("{0,%d}", path_spider[i]);
             else
-                printf("%d, ", 256+path_spider[i]);
+                printf("{0, %d}", 256+path_spider[i]);
+            if(i!=SPIDER_STEPS-1)
+                printf(", ");
+            if(i%10==0 && i!= 0)
+                printf("\n\t");
         }
         printf("};\n");
         /*printf("const CirclePath     CirclePathLUT[MAX_CIRCLE_RADII]={\n");
@@ -254,7 +262,7 @@ void main(){
         printf("extern const u8 DegreeToPathAngleLUT[360];\n");
         printf("extern const u8 DegreeToPathAngleLUT[360];\n");
         printf("extern const i8 ShootingCircle[3][PATH_ANGLES][2];\n");
-        printf("extern const u8 const i8 SpiderPath[SPIDER_STEPS];\n");
+        printf("extern const u8 const i8 SpiderPath[SPIDER_STEPS][2];\n");
         //printf("extern const CirclePath CirclePathLUT[MAX_CIRCLE_RADII];\n\n");*/
         printf("#endif\n");
     }

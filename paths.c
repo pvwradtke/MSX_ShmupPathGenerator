@@ -118,25 +118,25 @@ void main(){
         int radius=8*pow(2,r);
         for(int i=0;i<128;i++){
             angle = i*2*M_PI/PATH_ANGLES;
-            shootingPoints[r][i][0] = radius+lround(cos(angle)*(radius-3))-2;
-            shootingPoints[r][i][1] = radius+lround(sin(angle)*(radius-3))-2;
+            shootingPoints[r][i][0] = lround(cos(angle)*(radius))-2;
+            shootingPoints[r][i][1] = lround(sin(angle)*(radius))-2;
             if(DEBUG)
                printf("Radius: %d, Step: %d, (%d, %d)\n", radius, i, shootingPoints[r][i][0], shootingPoints[r][i][1]);
         }
     }
     // Calculate size 16x24
-    int radius1=16;
-    int radius2=24;
+    int radius1=8;
+    int radius2=12;
     for(int i=0;i<128;i++){
         angle = i*2*M_PI/PATH_ANGLES;
-        shootingPoints[3][i][0] = radius1+lround(cos(angle)*(radius1-3))-2;
-        shootingPoints[3][i][1] = radius2+lround(sin(angle)*(radius2-3))-2;
+        shootingPoints[3][i][0] = lround(cos(angle)*(radius1))-2;
+        shootingPoints[3][i][1] = lround(sin(angle)*(radius2))-2;
         if(DEBUG)
             printf("Radius: 16x24, Step: %d, (%d, %d)\n", i, shootingPoints[3][i][0], shootingPoints[3][i][1]);
     }
     // Calculate size 32x16
-    radius1=32;
-    radius2=16;
+    radius1=16;
+    radius2=8;
     for(int i=0;i<128;i++){
         angle = i*2*M_PI/PATH_ANGLES;
         shootingPoints[4][i][0] = radius1+lround(cos(angle)*(radius1-3))-2;
@@ -251,7 +251,7 @@ void main(){
             printf("\n");
         }
         printf("};\n\n");
-        printf("const i8 ShootingCircle[3][%d][2]={ \n", PATH_ANGLES);  
+        printf("const i8 ShootingCircle[5][%d][2]={ \n", PATH_ANGLES);  
         for(int r=0;r<5;r++){
             printf("    { ");
             for(int a=0;a<128;a++){   
@@ -262,7 +262,7 @@ void main(){
                     printf(" ");
                     
             }
-            if(r!=2)
+            if(r!=4)
                 printf("},\n");
             else
                 printf("}\n");
@@ -304,7 +304,7 @@ void main(){
         printf("extern const i8 PathAngleLUT[PATH_ANGLES][PATH_STEPS][2];\n");
         printf("extern const u8 DegreeToPathAngleLUT[360];\n");
         printf("extern const u8 DegreeToPathAngleLUT[360];\n");
-        printf("extern const i8 ShootingCircle[3][PATH_ANGLES][2];\n");
+        printf("extern const i8 ShootingCircle[5][PATH_ANGLES][2];\n");
         printf("extern const i8 SpiderPathDown[SPIDER_STEPS][2];\n");
         printf("extern const i8 SpiderPathUp[SPIDER_STEPS][2];\n");
         //printf("extern const CirclePath CirclePathLUT[MAX_CIRCLE_RADII];\n\n");*/

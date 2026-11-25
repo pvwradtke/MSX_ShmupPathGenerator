@@ -50,7 +50,7 @@ dividing 360 degrees in 128 parts (angle_to_lut), which is useful for getting fi
 int path_angle_lut[PATH_ANGLES][PATH_STEPS][2];
 uint8_t angle_to_lut[360];   // First index is the index into the Lut, the other 2 are the multiplication factor for x and y
 uint8_t targeting16x16[256];
-int shootingPoints[3][PATH_ANGLES][2];
+int shootingPoints[5][PATH_ANGLES][2];
 int path_spider[SPIDER_STEPS];
 int path_spider_up[SPIDER_STEPS];
 //int  path_circle[7][1024][2];
@@ -124,6 +124,27 @@ void main(){
                printf("Radius: %d, Step: %d, (%d, %d)\n", radius, i, shootingPoints[r][i][0], shootingPoints[r][i][1]);
         }
     }
+    // Calculate size 16x24
+    int radius1=16;
+    int radius2=24;
+    for(int i=0;i<128;i++){
+        angle = i*2*M_PI/PATH_ANGLES;
+        shootingPoints[3][i][0] = radius1+lround(cos(angle)*(radius1-3))-2;
+        shootingPoints[3][i][1] = radius2+lround(sin(angle)*(radius2-3))-2;
+        if(DEBUG)
+            printf("Radius: 16x24, Step: %d, (%d, %d)\n", i, shootingPoints[3][i][0], shootingPoints[3][i][1]);
+    }
+    // Calculate size 32x16
+    radius1=32;
+    radius2=16;
+    for(int i=0;i<128;i++){
+        angle = i*2*M_PI/PATH_ANGLES;
+        shootingPoints[4][i][0] = radius1+lround(cos(angle)*(radius1-3))-2;
+        shootingPoints[4][i][1] = radius2+lround(sin(angle)*(radius2-3))-2;
+        if(DEBUG)
+            printf("Radius: 32x16, Step: %d, (%d, %d)\n", i, shootingPoints[4][i][0], shootingPoints[4][i][1]);
+    }
+
     // Calculates the circle movements, for several radii: 32, 64, 96, 128, 160, 192, 224
     // Does it in the first 45 degrees in the 4th quadrant, and other quadrants and complementing 45 degrees are calculated by changing signs, and dx by dy
  /*   int radius_steps[6];
@@ -231,7 +252,7 @@ void main(){
         }
         printf("};\n\n");
         printf("const i8 ShootingCircle[3][%d][2]={ \n", PATH_ANGLES);  
-        for(int r=0;r<3;r++){
+        for(int r=0;r<5;r++){
             printf("    { ");
             for(int a=0;a<128;a++){   
                 printf("{ %d, %d}", shootingPoints[r][a][0], shootingPoints[r][a][1]);
